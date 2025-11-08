@@ -1,0 +1,51 @@
+# ----------------------------------------------------------
+# * Las variables de entorno las trae de el archivo ( .env )
+# ! en ME_CONFIG_MONGODB_SERVER y en DB_NAME
+# ! uso "db" que es el nombre del servicio,
+# porque con el nombre de la db no funciona no importa si llega 
+# * como variable -> ME_CONFIG_MONGODB_SERVER: ${MONGO_DB_NAME}
+# * o directa -> ME_CONFIG_MONGODB_SERVER: pokemon_db
+# ----------------------------------------------------------
+services:
+  db:
+    container_name: ${MONGO_DB_NAME}
+    image: mongo:6.0
+    volumes:
+      - poke-vol:/data/db
+    # ports:
+    #  - "27017:27017" # 👈 asi  no expone su servicio a la maquina host
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    command: ['--auth']
+
+  mongo-express:
+    depends_on:
+      - db
+    container_name: mongo-express
+    image: mongo-express:1.0.0-alpha.4
+    ports:
+      - "8081:8081"
+    restart: always
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USERNAME}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASSWORD}
+      ME_CONFIG_MONGODB_SERVER: ${MONGO_DB_NAME}   # ! 👈 aquí falla si uso el nombre o la variable de la DB
+      # ME_CONFIG_BASICAUTH: false   # opcional para pruebas locales
+
+  poke-app_backend:
+    depends_on:
+      - db
+      - mongo-express
+    container_name: 'poke-app_backend'
+    image: klerith/pokemon-nest-app:1.0.0
+    ports:
+      - "3000:3000"
+    environment:
+      MONGODB: mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_DB_NAME}:27017
+      DB_NAME: ${MONGO_DB_NAME}
+    restart: always
+volumes:
+  poke-vol:
+    external: false
