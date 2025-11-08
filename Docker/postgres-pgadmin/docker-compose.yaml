@@ -1,0 +1,30 @@
+# version: '3.8'
+services:
+  db:
+    container_name: postgres-db
+    image: postgres:15.1
+    ports:
+      - "5432:5432"
+    volumes:
+      # - postgres-db:/var/lib/postgresql/data # 👈 (usando volumen docker)
+      # * ╔══ esta es la forma usando un volumen enlazado a una carpeta en la maquina host
+      # * 👇  mas a bajo al final se aclara que "postgres-db" es externo
+      - ./postgres:/var/lib/postgresql/data # (usando volumen bind mount, osea creando una carpeta en el host)
+    environment:
+      - POSTGRES_PASSWORD=123456
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4:6.17
+    ports:
+      - "8080:80"
+    volumes:
+      # * 👇 esta es igual que la DB apunta a una carpeta en la maquina host
+      - ./pgadmin:/var/lib/pgadmin # 👈 (usando volumen bind mount, osea creando una carpeta en el host)
+    environment:
+      - PGADMIN_DEFAULT_PASSWORD=123456
+      - PGADMIN_DEFAULT_EMAIL=superman@google.com
+
+volumes:
+  postgres-db:
+    external: true
